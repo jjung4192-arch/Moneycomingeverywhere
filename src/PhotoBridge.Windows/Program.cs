@@ -62,10 +62,10 @@ internal sealed partial class MainWindow : Form
     }
     private void Ui(Action action){if(!IsDisposed&&IsHandleCreated)BeginInvoke(()=>{if(!IsDisposed)action();});}
     private void UpdateSelection(){selection.Text=$"{selected.Count:N0}개 선택";import.Enabled=selected.Count>0&&!copying&&!loading;}
-    private void Busy(bool value){loading=value;connect.Enabled=choose.Enabled=!value&&!copying;gallery.Enabled=!copying;all.Enabled=!value&&!copying;up.Enabled=!value&&!copying&&history.Count>0;previous.Enabled=!value&&!copying&&offset>0;next.Enabled=!value&&!copying&&nextOffset>=0;clear.Enabled=!copying;cancel.Enabled=value||copying;UpdateSelection();}
+    private void Busy(bool value){loading=value;connect.Enabled=choose.Enabled=!value&&!copying;gallery.Enabled=!copying&&!value;all.Enabled=!value&&!copying;up.Enabled=!value&&!copying&&history.Count>0;previous.Enabled=!value&&!copying&&offset>0;next.Enabled=!value&&!copying&&nextOffset>=0;clear.Enabled=!copying&&!value;cancel.Enabled=value||copying;UpdateSelection();}
     private void OpenPhone()
     {
-        browseCancel?.Cancel();var cts=browseCancel=new();var token=cts.Token;int version=++generation;selected.Clear();history.Clear();current=null;offset=0;nextOffset=-1;errors.Clear();Busy(true);status.Text="아이폰을 여는 중 · 원본 복사는 하지 않습니다.";
+        browseCancel?.Cancel();var cts=browseCancel=new();var token=cts.Token;int version=++generation;selected.Clear();history.Clear();rendering=true;gallery.Items.Clear();rendering=false;current=null;offset=0;nextOffset=-1;errors.Clear();Busy(true);status.Text="아이폰을 여는 중 · 원본 복사는 하지 않습니다.";
         work.Add(()=>{try{phone?.Dispose();phone=createPhone();var root=phone.Connect();var page=phone.ReadPage(root,0,token);ShowPage(page,"iPhone",version,token);}catch(Exception ex){BrowseError(ex,version);}});
     }
     private void LoadPage(string id,int pageOffset,string title)
