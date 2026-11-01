@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths: ['src/**', 'tests/**', '.github/workflows/windows.yml']
   workflow_dispatch:
+concurrency:
+  group: photobridge-windows
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:

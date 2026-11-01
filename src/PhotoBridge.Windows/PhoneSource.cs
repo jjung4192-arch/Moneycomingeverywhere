@@ -24,7 +24,9 @@ public sealed class PhoneSession : IDisposable
         cancellation.ThrowIfCancellationRequested();if(depth>20)throw new IOException("아이폰 폴더 구조를 확인할 수 없습니다.");
         foreach(dynamic item in folder.Items())
         {
-            cancellation.ThrowIfCancellationRequested();string name=Convert.ToString(item.Name)??"";string path=relative+"/"+name;
+            cancellation.ThrowIfCancellationRequested();string name=Convert.ToString(item.Name)??"";
+            if(!(bool)item.IsFolder){try{string fullName=Convert.ToString(item.ExtendedProperty("System.FileName"))??"";if(!string.IsNullOrWhiteSpace(fullName))name=fullName;}catch{}}
+            string path=relative+"/"+name;
             if((bool)item.IsFolder){status($"사진 찾는 중 · {name}");Walk(item.GetFolder,device,path,found,cancellation,status,depth+1);}
             else if(Extensions.Contains(Path.GetExtension(name)))
             {
