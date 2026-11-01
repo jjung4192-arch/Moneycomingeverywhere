@@ -18,6 +18,23 @@ jobs:
         run: dotnet run --project tests/PhotoBridge.Checks -c Release
       - name: Publish portable Windows x64 app
         run: dotnet publish src/PhotoBridge.Windows -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/PhotoBridge
+      - name: Check Windows UI startup
+        shell: pwsh
+        run: |
+          $app = Start-Process -FilePath "$pwd/artifacts/PhotoBridge/PhotoBridge.exe" -PassThru
+          try {
+            $visible = $false
+            for ($attempt = 0; $attempt -lt 30; $attempt++) {
+              Start-Sleep -Milliseconds 500
+              $app.Refresh()
+              if ($app.HasExited) { throw "App exited during startup: $($app.ExitCode)" }
+              if ($app.MainWindowHandle -ne 0) { $visible = $true; break }
+            }
+            if (-not $visible) { throw "App window did not appear" }
+            Write-Output "Windows app window opened successfully"
+          } finally {
+            if (-not $app.HasExited) { Stop-Process -Id $app.Id }
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: PhotoBridge-Windows-x64
