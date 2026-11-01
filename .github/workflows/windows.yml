@@ -1,0 +1,34 @@
+name: Build Windows app
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'tests/**', '.github/workflows/windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Check transfer logic
+        run: dotnet run --project tests/PhotoBridge.Checks -c Release
+      - name: Publish portable Windows x64 app
+        run: dotnet publish src/PhotoBridge.Windows -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/PhotoBridge
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhotoBridge-Windows-x64
+          path: artifacts/PhotoBridge/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Package download
+        shell: pwsh
+        run: Compress-Archive -Path artifacts/PhotoBridge/* -DestinationPath artifacts/PhotoBridge-Windows-x64.zip
+      - name: Publish clearly labelled test build
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "photobridge-preview-${{ github.run_number }}" artifacts/PhotoBridge-Windows-x64.zip --title "PhotoBridge Windows 시험판 #${{ github.run_number }}" --prerelease --target "${{ github.sha }}" --notes-file RELEASE_NOTES.md
