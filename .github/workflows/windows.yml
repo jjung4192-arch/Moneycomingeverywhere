@@ -38,6 +38,17 @@ jobs:
           } finally {
             if (-not $app.HasExited) { Stop-Process -Id $app.Id }
           }
+      - name: Verify browse and selected-only import UI
+        shell: pwsh
+        run: |
+          $app = Start-Process -FilePath "$pwd/artifacts/PhotoBridge/PhotoBridge.exe" -ArgumentList '--self-test' -PassThru
+          try {
+            if (-not $app.WaitForExit(60000)) { throw 'Selection UI check timed out' }
+            if (Test-Path ui-checks.txt) { Get-Content ui-checks.txt }
+            if ($app.ExitCode -ne 0) { throw 'Selection UI check failed' }
+          } finally {
+            if (-not $app.HasExited) { Stop-Process -Id $app.Id }
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: PhotoBridge-Windows-x64
@@ -52,7 +63,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $output = & gh release create "photobridge-preview-${{ github.run_number }}" artifacts/PhotoBridge-Windows-x64.zip --repo "${{ github.repository }}" --title "PhotoBridge Windows 시험판 #${{ github.run_number }}" --prerelease --target "${{ github.sha }}" --notes-file RELEASE_NOTES.md 2>&1 | Out-String
+          $output = & gh release create "photobridge-preview-${{ github.run_number }}" artifacts/PhotoBridge-Windows-x64.zip --repo "${{ github.repository }}" --title "PhotoBridge 사진 선택 시험판 #${{ github.run_number }}" --prerelease --target "${{ github.sha }}" --notes-file RELEASE_NOTES.md 2>&1 | Out-String
           if ($LASTEXITCODE -ne 0) {
             $message = $output.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
             Write-Output "::error title=Test release upload failed::$message"
