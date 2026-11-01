@@ -51,4 +51,11 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "photobridge-preview-${{ github.run_number }}" artifacts/PhotoBridge-Windows-x64.zip --title "PhotoBridge Windows 시험판 #${{ github.run_number }}" --prerelease --target "${{ github.sha }}" --notes-file RELEASE_NOTES.md
+        run: |
+          $output = & gh release create "photobridge-preview-${{ github.run_number }}" artifacts/PhotoBridge-Windows-x64.zip --repo "${{ github.repository }}" --title "PhotoBridge Windows 시험판 #${{ github.run_number }}" --prerelease --target "${{ github.sha }}" --notes-file RELEASE_NOTES.md 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            $message = $output.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Test release upload failed::$message"
+            exit 1
+          }
+          Write-Output $output
